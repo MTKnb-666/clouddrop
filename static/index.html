@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudDrop · 口令文件快递</title>
+<style>
+  :root{
+    --brand:#4f46e5;--brand2:#7c3aed;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;
+    --ok:#16a34a;--danger:#dc2626;--shadow:0 10px 30px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(135deg,#0f172a 0%,#312e81 55%,#6d28d9 100%);
+    color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:30px 18px 60px}
+  .top{display:flex;align-items:center;justify-content:space-between;color:#fff;margin-bottom:24px}
+  .logo{font-size:24px;font-weight:800;color:#fff;letter-spacing:.5px}
+  .brand-tag{font-size:12px;opacity:.72;margin-top:2px}
+  .mode{font-size:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+    padding:6px 12px;border-radius:99px;color:#fff}
+
+  .card{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:26px;margin-bottom:18px}
+  .card h2{font-size:17px;margin-bottom:4px}
+  .hint{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.6}
+  label{display:block;font-size:13px;font-weight:600;margin:16px 0 7px}
+  .req{color:var(--danger)}
+  input[type=text],input[type=password]{width:100%;padding:12px 14px;border:1.5px solid var(--line);
+    border-radius:10px;font-size:14px;outline:none;transition:.2s}
+  input:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(79,70,229,.1)}
+
+  .drop{border:2px dashed #c7d2fe;border-radius:14px;padding:30px 18px;text-align:center;
+    background:#f8fafc;transition:.2s;cursor:pointer}
+  .drop.over{border-color:var(--brand);background:#eef2ff;transform:scale(1.01)}
+  .drop .up-icon{width:44px;height:44px;margin:0 auto 10px;border-radius:13px;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center}
+  .drop .up-icon svg{width:22px;height:22px;stroke:#fff}
+  .drop b{display:block;font-size:14px;margin-bottom:4px}
+  .drop span{color:var(--muted);font-size:12px}
+
+  .chosen{margin-top:14px;display:none}
+  .chosen.show{display:block}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#eef2ff;color:#3730a3;
+    padding:6px 11px;border-radius:8px;font-size:12px;margin:4px 6px 0 0;max-width:100%}
+  .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+
+  .ttls{display:flex;gap:8px;flex-wrap:wrap}
+  .ttl{flex:1;min-width:70px;text-align:center;padding:11px 6px;border:1.5px solid var(--line);
+    border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;color:var(--muted)}
+  .ttl:hover{border-color:#a5b4fc}
+  .ttl.sel{border-color:var(--brand);background:#eef2ff;color:var(--brand)}
+
+  .btn{border:none;border-radius:11px;padding:13px 20px;font-size:15px;font-weight:600;cursor:pointer;
+    transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  .btn-primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;width:100%;margin-top:22px}
+  .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .err{color:var(--danger);font-size:13px;margin-top:12px;min-height:18px}
+
+  .progress-wrap{margin-top:16px;display:none}
+  .progress-wrap.show{display:block}
+  .progress{height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .2s}
+  .progress-txt{font-size:12px;color:var(--muted);margin-top:6px}
+
+  .file-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #f1f5f9}
+  .file-row:last-child{border-bottom:none}
+  .ficon{width:36px;height:36px;border-radius:9px;background:#eef2ff;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;font-size:17px}
+  .fmeta{flex:1;min-width:0}
+  .fname{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fsub{color:var(--muted);font-size:12px;margin-top:2px}
+  .btn-dl{background:var(--brand);color:#fff;padding:8px 14px;font-size:13px;border-radius:9px;flex-shrink:0}
+  .btn-dl:disabled{opacity:.5}
+  .ico-btn{width:36px;height:36px;border:none;border-radius:9px;background:#f1f5f9;color:#475569;
+    cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .ico-btn:hover{background:#e2e8f0}
+  .ico-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+
+  .result{text-align:center;padding:10px 0}
+  .result .ok-icon{width:56px;height:56px;border-radius:50%;background:#dcfce7;color:var(--ok);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px}
+  .link-box{display:flex;gap:8px;margin:16px 0}
+  .link-box input{flex:1;font-size:12px;background:#f8fafc}
+  .btn-copy{background:#0f172a;color:#fff;padding:0 16px;white-space:nowrap;font-size:13px;border-radius:10px}
+  .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:11px 14px;border-radius:10px;
+    font-size:12px;line-height:1.6;text-align:left;margin-top:14px}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(100px);
+    background:#0f172a;color:#fff;padding:13px 22px;border-radius:12px;font-size:14px;
+    box-shadow:0 12px 30px rgba(0,0,0,.3);opacity:0;transition:.3s;z-index:99;max-width:90%}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .hidden{display:none!important}
+  @media(max-width:640px){.wrap{padding:20px 13px 40px}.card{padding:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><div class="logo">CloudDrop</div><div class="brand-tag">口令文件快递 · 到期自动销毁</div></div>
+    <div class="mode" id="modeTag">发送文件</div>
+  </div>
+
+  <!-- 发送视图 -->
+  <div id="sendView">
+    <div class="card">
+      <h2>📤 发送文件</h2>
+      <div class="hint">设置提取口令和有效期，生成链接发给对方。对方需输入正确口令才能下载，到期文件自动销毁。</div>
+      <div class="drop" id="drop">
+        <div class="up-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
+        <b>点击选择文件，或拖拽到此处</b><span>支持多选，单个文件最大 <span id="maxsize">500</span> MB</span>
+      </div>
+      <input type="file" id="fileInput" multiple hidden>
+      <div class="chosen" id="chosen"></div>
+      <div class="progress-wrap" id="pw2"><div class="progress"><i id="bar"></i></div><div class="progress-txt" id="ptxt">上传中…</div></div>
+
+      <label>提取口令 <span class="req">*</span></label>
+      <input type="text" id="passcode" placeholder="设置一个口令，对方需输入才能下载" maxlength="64" autocomplete="off">
+      <label>有效期</label>
+      <div class="ttls" id="ttls">
+        <div class="ttl" data-v="1h">1 小时</div>
+        <div class="ttl" data-v="6h">6 小时</div>
+        <div class="ttl sel" data-v="24h">24 小时</div>
+        <div class="ttl" data-v="72h">3 天</div>
+      </div>
+      <button class="btn btn-primary" id="sendBtn">生成分享链接</button>
+      <div class="err" id="sendErr"></div>
+    </div>
+  </div>
+
+  <!-- 结果视图 -->
+  <div class="card hidden" id="resultView">
+    <div class="result">
+      <div class="ok-icon">✓</div>
+      <h2>分享链接已生成</h2>
+      <div class="hint" style="margin:6px 0 0">把下面的链接和提取口令分别发给对方</div>
+      <div class="link-box"><input type="text" id="shareLink" readonly><button class="btn btn-copy" id="copyLink">复制链接</button></div>
+      <div class="link-box"><input type="text" id="sharePass" readonly><button class="btn btn-copy" id="copyPass">复制口令</button></div>
+      <div class="note" id="note"></div>
+      <button class="btn btn-primary" id="againBtn" style="margin-top:18px">再发一批文件</button>
+    </div>
+  </div>
+
+  <!-- 接收视图 -->
+  <div class="card hidden" id="recvView">
+    <h2>📥 收到文件</h2>
+    <div class="hint" id="recvHint">有人给你传了文件</div>
+    <div id="recvFiles"></div>
+    <label style="margin-top:20px">输入提取口令</label>
+    <input type="password" id="recvPass" placeholder="请输入对方告知的口令" autocomplete="off">
+    <button class="btn btn-primary" id="unlockBtn">验证并下载</button>
+    <div class="err" id="recvErr"></div>
+    <div id="dlArea"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QS = location.search;
+const $ = id => document.getElementById(id);
+let ttl = '24h', picked = [], token = '', pkgFiles = [], pid = '';
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800)}
+function fmt(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';if(b<1073741824)return (b/1048576).toFixed(1)+' MB';return (b/1073741824).toFixed(2)+' GB'}
+function icon(n){const e=(n.split('.').pop()||'').toLowerCase();const m={pdf:'📕',zip:'🗜️',rar:'🗜️','7z':'🗜️',doc:'📘',docx:'📘',xls:'📗',xlsx:'📗',png:'🖼️',jpg:'🖼️',jpeg:'🖼️',gif:'🖼️',mp4:'🎬',mp3:'🎵',txt:'📄'};return m[e]||'📄'}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function api(p){return p+QS}
+
+// ===== 发送 =====
+const drop=$('drop'),fi=$('fileInput');
+drop.onclick=()=>fi.click();
+fi.onchange=()=>{addFiles(fi.files);fi.value=''};
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',ev=>addFiles(ev.dataTransfer.files));
+function addFiles(fl){
+  for(const f of fl){ if(!picked.find(x=>x.name===f.name&&x.size===f.size)) picked.push(f); }
+  renderPicked();
+}
+function renderPicked(){
+  const c=$('chosen');
+  if(!picked.length){c.className='chosen';c.innerHTML='';return}
+  c.className='chosen show';
+  c.innerHTML=picked.map((f,i)=>`<div class="chip">${icon(f.name)}<span>${esc(f.name)} · ${fmt(f.size)}</span></div>`).join('');
+}
+$('ttls').onclick=e=>{
+  const t=e.target.closest('.ttl');if(!t)return;
+  document.querySelectorAll('.ttl').forEach(x=>x.classList.remove('sel'));
+  t.classList.add('sel');ttl=t.dataset.v;
+};
+$('sendBtn').onclick=send;
+async function send(){
+  const btn=$('sendBtn'),pc=$('passcode').value.trim();
+  if(!picked.length){toast('请先选择文件');return}
+  if(!pc){$('sendErr').textContent='请设置提取口令';return}
+  btn.disabled=true;$('sendErr').textContent='';
+  const fd=new FormData();
+  for(const f of picked)fd.append('files',f);
+  fd.append('passcode',pc);fd.append('ttl',ttl);
+  const pw=$('pw2'),bar=$('bar'),ptxt=$('ptxt');pw.classList.add('show');bar.style.width='0%';
+  try{
+    const r=await new Promise((resolve,reject)=>{
+      const x=new XMLHttpRequest();
+      x.open('POST',api('/api/send'));
+      x.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);bar.style.width=p+'%';ptxt.textContent='上传中… '+p+'%'}};
+      x.onload=()=>{try{resolve(JSON.parse(x.responseText))}catch(e){reject(new Error('上传失败'))}};
+      x.onerror=()=>reject(new Error('网络错误'));
+      x.send(fd);
+    });
+    bar.style.width='100%';
+    if(!r.ok)throw new Error(r.detail||'上传失败');
+    pid=r.id;
+    const params=new URLSearchParams(QS);params.set('p',pid);
+    const link=location.origin+location.pathname+'?'+params.toString();
+    $('shareLink').value=link;$('sharePass').value=pc;
+    const mins={h:'小时',d:'天'};
+    const ttlTxt={'1h':'1 小时','6h':'6 小时','24h':'24 小时','72h':'3 天'}[ttl];
+    $('note').innerHTML=`📦 共 ${r.file_count} 个文件 · 有效期 <b>${ttlTxt}</b><br>⚠️ 请通过不同渠道分别发送「链接」和「口令」，文件到期后将自动从云端永久删除。`;
+    $('sendView').classList.add('hidden');$('resultView').classList.remove('hidden');
+    $('modeTag').textContent='链接已生成';
+  }catch(e){$('sendErr').textContent=e.message;pw.classList.remove('show')}
+  finally{btn.disabled=false}
+}
+function copy(el,label){el.select();document.execCommand('copy');toast(label+'已复制')}
+$('copyLink').onclick=()=>copy($('shareLink'),'链接');
+$('copyPass').onclick=()=>copy($('sharePass'),'口令');
+$('againBtn').onclick=()=>{
+  picked=[];$('passcode').value='';renderPicked();
+  $('resultView').classList.add('hidden');$('sendView').classList.remove('hidden');
+  $('modeTag').textContent='发送文件';
+};
+
+// ===== 接收 =====
+async function initRecv(){
+  const d=await fetch(api('/api/info/'+pid)).then(r=>r.json().then(x=>({ok:r.ok,d:x})));
+  if(!d.ok){toast(d.d.detail||'链接无效');return}
+  const info=d.d;
+  const left=info.remaining;
+  const leftTxt=left>3600?(left/3600).toFixed(1)+' 小时':Math.max(1,Math.ceil(left/60))+' 分钟';
+  $('recvHint').textContent=`有人给你传了 ${info.file_count} 个文件（共 ${fmt(info.total_size)}），还有 ${leftTxt} 有效`;
+  $('recvFiles').innerHTML=info.files.map(f=>`<div class="file-row"><div class="ficon">${icon(f.name)}</div><div class="fmeta"><div class="fname">${esc(f.name)}</div><div class="fsub">${fmt(f.size)}</div></div></div>`).join('');
+}
+$('unlockBtn').onclick=unlock;
+$('recvPass').addEventListener('keydown',e=>{if(e.key==='Enter')unlock()});
+async function unlock(){
+  const btn=$('unlockBtn'),pc=$('recvPass').value;
+  if(!pc){$('recvErr').textContent='请输入口令';return}
+  btn.disabled=true;$('recvErr').textContent='';
+  try{
+    const r=await fetch(api('/api/unlock/'+pid),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passcode:pc})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'验证失败');
+    token=d.token;pkgFiles=d.files;
+    $('dlArea').innerHTML=`<div style="margin-top:18px"><div class="hint" style="color:var(--ok);margin-bottom:8px">✓ 口令正确，点击下载：</div>${
+      pkgFiles.map(f=>`<div class="file-row"><div class="ficon">${icon(f.name)}</div><div class="fmeta"><div class="fname">${esc(f.name)}</div><div class="fsub">${fmt(f.size)}</div></div><button class="btn btn-dl" onclick="doDl('${f.stored}','${esc(f.name)}')">下载</button></div>`).join('')
+    }</div>`;
+    toast('验证成功');
+  }catch(e){$('recvErr').textContent=e.message}
+  finally{btn.disabled=false}
+}
+function doDl(stored,name){
+  // 保留预览网关路由参数，移除业务参数 p，附上短期下载令牌
+  const params=new URLSearchParams(QS);
+  params.delete('p');
+  params.set('token',token);
+  location.href=location.origin+location.pathname+'/api/download/'+pid+'/'+stored+'?'+params.toString();
+}
+
+// ===== 启动 =====
+(async()=>{
+  try{const c=await fetch(api('/api/config')).then(r=>r.json());$('maxsize').textContent=Math.round(c.maxFileSize/1048576)}catch(e){}
+  const sp=new URLSearchParams(location.search).get('p');
+  if(sp){pid=sp;$('sendView').classList.add('hidden');$('recvView').classList.remove('hidden');$('modeTag').textContent='接收文件';initRecv()}
+})();
+</script>
+</body>
+</html>
