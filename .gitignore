@@ -1,0 +1,6 @@
+# 运行时数据，不提交
+data/
+*.log
+__pycache__/
+*.pyc
+.DS_Store
